@@ -17,7 +17,13 @@ func GetQueryFromOpenAI(c *gin.Context) {
 	}
 	defer c.Request.Body.Close()
 
-	query := service.GetQuery(string(body))
+	queryService := service.QueryService{}
+	response, err := queryService.AnalyzeDatabase(string(body))
+	if err != nil {
+		log.Printf("Error analyzing database: %v", err)
+		c.JSON(400, gin.H{"error": "Error analyzing database"})
+		return
+	}
 
-	c.JSON(200, query)
+	c.JSON(200, response)
 }

@@ -1,17 +1,16 @@
 package main
 
 import (
-	"context"
 	"log"
 	"os"
 
 	"analytics/internal/api/handlers"
 	"analytics/internal/api/routes"
+	"analytics/internal/db"
 	"analytics/internal/repository"
 	"analytics/internal/service"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
 )
 
@@ -21,16 +20,8 @@ func main() {
 		log.Printf("Warning: Error loading .env file: %v\n", err)
 	}
 
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		log.Fatalf("DATABASE_URL is not set")
-	}
-
-	conn, err := pgx.Connect(context.Background(), dbURL)
-	if err != nil {
-		log.Fatalf("Unable to connect to database: %v\n", err)
-	}
-	defer conn.Close(context.Background())
+	databaseService := &db.DatabaseService{}
+	conn := databaseService.GetConnection()
 
 	transactionRepo := repository.NewTransactionRepository(conn)
 	categoryRepo := repository.NewCategoryRepository(conn)
