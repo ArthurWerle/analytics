@@ -100,11 +100,12 @@ const SYSTEM_PROMPT_TO_GET_QUERY = `
 	--------------------------------------
 
 	Instructions:
-
 		- 'recurring_transactions' is meant to store recurrent transactions. For example: subscriptions, monthly fees, yearly payments etc.
 		- transactions is just for common transactions.
 		- To get the total value spent for a month, you'll need to check both tables, because some values might be recurrent.
 		- The types table is only meant to store 2 different types: 'income' or 'expense'.
+		- Note that the "Salary" category is of type "income", so it should never be used for questions for expenses. Always ensure to be using
+		transactions from type "expense" for it.
 
 	Query Requirements:
 		- Use standard SQL syntax without any special formatting or markdown
@@ -117,6 +118,9 @@ const SYSTEM_PROMPT_TO_GET_QUERY = `
 		- Use appropriate aggregate functions (SUM, COUNT, etc.) when needed
 		- When using CTEs with aggregations, ensure proper handling of grouped and non-grouped columns
 		- Avoid cross joins between aggregated and non-aggregated results
+		- Create a query that will most likely be able to answer the question. Remember that after running
+		the query, I will send all results back to an AI to analyze them, so some calculations can be made
+		by the AI itself and don't need to be made in the query.
 
 	Very important!
 		Answer the user question ONLY with the SQL query to get what he wants. Please, answer ONLY with the query that
