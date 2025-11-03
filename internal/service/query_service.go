@@ -208,7 +208,6 @@ func (q *QueryService) ConvertResult(rows pgx.Rows) (gin.H, error) {
 	var results []map[string]interface{}
 	rowCount := 0
 
-	// Try to get the first row
 	hasNext := rows.Next()
 	log.Printf("First rows.Next() returned: %v", hasNext)
 
@@ -230,7 +229,6 @@ func (q *QueryService) ConvertResult(rows pgx.Rows) (gin.H, error) {
 		results = append(results, row)
 		rowCount++
 
-		// Process any remaining rows
 		for rows.Next() {
 			values, err := rows.Values()
 			if err != nil {
@@ -251,7 +249,6 @@ func (q *QueryService) ConvertResult(rows pgx.Rows) (gin.H, error) {
 		}
 	} else {
 		log.Printf("No rows returned from query")
-		// For aggregate queries that return no rows, we should return a row with null/zero values
 		row := make(map[string]interface{})
 		for _, col := range columns {
 			row[col] = nil

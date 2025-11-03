@@ -63,7 +63,6 @@ func (r *TransactionAnalysisService) GetAverageSpendByCategory(ctx context.Conte
 		Count int
 	})
 
-	// Process regular transactions
 	processRegularTransactions(transactions, spendByMonth)
 
 	// Process recurring transactions
@@ -94,12 +93,10 @@ func processRegularTransactions(transactions []domain.Transaction, spendByMonth 
 	Count int
 }) {
 	for _, tx := range transactions {
-		// Skip income
 		if tx.TypeID != 3 {
 			continue
 		}
 
-		// Create month key (first day of month)
 		monthKey := fmt.Sprintf("%d-%d-%d",
 			tx.CategoryID,
 			tx.Date.Year(),
@@ -117,12 +114,10 @@ func processRecurringTransactions(transactions []domain.RecurringTransaction, sp
 	Count int
 }) {
 	for _, tx := range transactions {
-		// Skip income
 		if tx.TypeID != 3 {
 			continue
 		}
 
-		// Create month key (first day of month)
 		monthKey := fmt.Sprintf("%d-%d-%d",
 			tx.CategoryID,
 			time.Now().Year(),
