@@ -4,16 +4,15 @@ import (
 	"analytics/internal/repository"
 	"analytics/internal/service"
 	"net/http"
-)
-
-package handlers
-
-import (
-	"analytics/internal/repository"
-	"analytics/internal/service"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
+)
+
+type TransactionType string
+
+const (
+	Expense TransactionType = "expense"
+	Income  TransactionType = "income"
 )
 
 type TypeHandler struct {
