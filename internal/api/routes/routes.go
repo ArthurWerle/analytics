@@ -14,8 +14,21 @@ func SetupRoutes(router *gin.Engine, transactionHandler *handlers.TransactionHan
 		c.JSON(200, gin.H{"message": "OK"})
 	})
 
-	router.GET("/transactions", transactionHandler.GetTransactions)
-	router.GET("/average-spend", transactionHandler.GetAverageSpendByCategory)
+	v1 := router.Group("/api/v1")
+	v1.POST("/query", handlers.GetQueryFromOpenAI)
 
-	router.POST("/v1/query", handlers.GetQueryFromOpenAI)
+	{
+		transactions := v1.Group("/transactions")
+		transactions.GET("/", transactionHandler.GetTransactions)
+	}
+
+	{
+		category := v1.Group("/category")
+		category.GET("/:category_id/average-spend", transactionHandler.GetAverageSpendByCategory)
+	}
+
+	{
+		transactionType := v1.Group("/type")
+		transactionType.GET("/:type_id/average-spend", transactionHandler.GetAverageSpendByCategory)
+	}
 }
