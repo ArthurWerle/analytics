@@ -12,12 +12,12 @@ type AverageType struct {
 }
 
 type TypeService struct {
-	typeRepo        *repository.TypeRepository
-	transactionRepo *repository.TransactionRepository
-	recurringRepo   *repository.RecurringTransactionRepository
+	typeRepo        repository.TypeRepositoryInterface
+	transactionRepo repository.TransactionRepositoryInterface
+	recurringRepo   repository.RecurringTransactionRepositoryInterface
 }
 
-func NewTypeService(typeRepo *repository.TypeRepository, transactionRepo *repository.TransactionRepository, recurringRepo *repository.RecurringTransactionRepository) *TypeService {
+func NewTypeService(typeRepo repository.TypeRepositoryInterface, transactionRepo repository.TransactionRepositoryInterface, recurringRepo repository.RecurringTransactionRepositoryInterface) *TypeService {
 	return &TypeService{typeRepo: typeRepo, transactionRepo: transactionRepo, recurringRepo: recurringRepo}
 }
 

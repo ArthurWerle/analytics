@@ -9,11 +9,11 @@ import (
 )
 
 type TypeHandler struct {
-	repo    *repository.TypeRepository
+	repo    repository.TypeRepositoryInterface
 	service *service.TypeService
 }
 
-func NewTypeHandler(repo *repository.TypeRepository, service *service.TypeService) *TypeHandler {
+func NewTypeHandler(repo repository.TypeRepositoryInterface, service *service.TypeService) *TypeHandler {
 	return &TypeHandler{
 		repo:    repo,
 		service: service,
