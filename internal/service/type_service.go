@@ -4,13 +4,11 @@ import (
 	"analytics/internal/repository"
 	"context"
 	"fmt"
-	"time"
 )
 
 type AverageType struct {
 	TypeID   int
 	TypeName string
-	Month    time.Time
 	Average  float64
 }
 
@@ -74,19 +72,28 @@ func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, erro
 		spendByTypeAndMonth[monthKey] = stats
 	}
 
-	var result []AverageType
+	monthlyAveragesByType := make(map[int][]float64)
+
 	for key, stats := range spendByTypeAndMonth {
 		var typeID, year, month int
 		fmt.Sscanf(key, "%d-%d-%d", &typeID, &year, &month)
 
-		date := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
-		average := stats.Total / float64(stats.Count)
+		monthlyAverage := stats.Total / float64(stats.Count)
+		monthlyAveragesByType[typeID] = append(monthlyAveragesByType[typeID], monthlyAverage)
+	}
+
+	var result []AverageType
+	for typeID, monthlyAverages := range monthlyAveragesByType {
+		var sum float64
+		for _, avg := range monthlyAverages {
+			sum += avg
+		}
+		overallAverage := sum / float64(len(monthlyAverages))
 
 		result = append(result, AverageType{
 			TypeID:   typeID,
 			TypeName: typeMap[typeID],
-			Month:    date,
-			Average:  average,
+			Average:  overallAverage,
 		})
 	}
 

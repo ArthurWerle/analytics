@@ -103,11 +103,11 @@ func TestGetAverageByType_Handler_Success(t *testing.T) {
 	}
 
 	if len(results) != 2 {
-		t.Fatalf("Expected 2 results (Expense-Jan, Income-Feb), got %d", len(results))
+		t.Fatalf("Expected 2 results (one per type), got %d", len(results))
 	}
 
 	for _, result := range results {
-		if result.TypeID == 1 && result.Month.Month() == time.January {
+		if result.TypeID == 1 {
 			expectedAvg := 200.0
 			if result.Average != expectedAvg {
 				t.Errorf("Expected expense average %f, got %f", expectedAvg, result.Average)
@@ -115,7 +115,7 @@ func TestGetAverageByType_Handler_Success(t *testing.T) {
 			if result.TypeName != string(domain.Expense) {
 				t.Errorf("Expected type name %s, got %s", domain.Expense, result.TypeName)
 			}
-		} else if result.TypeID == 2 && result.Month.Month() == time.February {
+		} else if result.TypeID == 2 {
 			expectedAvg := 3000.0
 			if result.Average != expectedAvg {
 				t.Errorf("Expected income average %f, got %f", expectedAvg, result.Average)
@@ -240,9 +240,5 @@ func TestGetAverageByType_Handler_HandlesNullableFields(t *testing.T) {
 	expectedAvg := 300.0
 	if results[0].Average != expectedAvg {
 		t.Errorf("Expected average %f, got %f", expectedAvg, results[0].Average)
-	}
-
-	if results[0].Month.Month() != time.May || results[0].Month.Year() != 2024 {
-		t.Errorf("Expected month May 2024, got %s", results[0].Month)
 	}
 }

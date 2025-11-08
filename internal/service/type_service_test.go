@@ -60,8 +60,9 @@ func TestGetAverageByType_WithOnlyRegularTransactions(t *testing.T) {
 		transactions: []domain.Transaction{
 			{ID: 1, TypeID: 1, Amount: 100.0, Date: jan2024},
 			{ID: 2, TypeID: 1, Amount: 200.0, Date: jan2024},
-			{ID: 3, TypeID: 2, Amount: 1000.0, Date: feb2024},
-			{ID: 4, TypeID: 2, Amount: 2000.0, Date: feb2024},
+			{ID: 3, TypeID: 1, Amount: 300.0, Date: feb2024},
+			{ID: 4, TypeID: 2, Amount: 1000.0, Date: jan2024},
+			{ID: 5, TypeID: 2, Amount: 2000.0, Date: feb2024},
 		},
 	}
 
@@ -78,22 +79,22 @@ func TestGetAverageByType_WithOnlyRegularTransactions(t *testing.T) {
 	}
 
 	if len(results) != 2 {
-		t.Fatalf("Expected 2 results (one per type per month), got %d", len(results))
+		t.Fatalf("Expected 2 results (one per type), got %d", len(results))
 	}
 
 	for _, result := range results {
-		if result.TypeID == 1 && result.Month.Month() == time.January {
-			expectedAvg := 150.0
+		if result.TypeID == 1 {
+			expectedAvg := (150.0 + 300.0) / 2
 			if result.Average != expectedAvg {
-				t.Errorf("Expected expense average in January %f, got %f", expectedAvg, result.Average)
+				t.Errorf("Expected expense average %f, got %f", expectedAvg, result.Average)
 			}
 			if result.TypeName != string(domain.Expense) {
 				t.Errorf("Expected type name %s, got %s", domain.Expense, result.TypeName)
 			}
-		} else if result.TypeID == 2 && result.Month.Month() == time.February {
-			expectedAvg := 1500.0
+		} else if result.TypeID == 2 {
+			expectedAvg := (1000.0 + 2000.0) / 2
 			if result.Average != expectedAvg {
-				t.Errorf("Expected income average in February %f, got %f", expectedAvg, result.Average)
+				t.Errorf("Expected income average %f, got %f", expectedAvg, result.Average)
 			}
 			if result.TypeName != string(domain.Income) {
 				t.Errorf("Expected type name %s, got %s", domain.Income, result.TypeName)
@@ -150,10 +151,6 @@ func TestGetAverageByType_WithBothRegularAndRecurringTransactions(t *testing.T) 
 
 	if results[0].TypeName != string(domain.Expense) {
 		t.Errorf("Expected type name %s, got %s", domain.Expense, results[0].TypeName)
-	}
-
-	if results[0].Month.Month() != time.January || results[0].Month.Year() != 2024 {
-		t.Errorf("Expected month January 2024, got %s", results[0].Month)
 	}
 }
 
@@ -222,10 +219,6 @@ func TestGetAverageByType_WithSingleTransaction(t *testing.T) {
 	expectedAvg := 250.50
 	if results[0].Average != expectedAvg {
 		t.Errorf("Expected average %f, got %f", expectedAvg, results[0].Average)
-	}
-
-	if results[0].Month.Month() != time.March || results[0].Month.Year() != 2024 {
-		t.Errorf("Expected month March 2024, got %s", results[0].Month)
 	}
 }
 
