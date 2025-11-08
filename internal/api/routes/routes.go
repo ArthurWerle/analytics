@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(router *gin.Engine, transactionHandler *handlers.TransactionHandler) {
+func SetupRoutes(router *gin.Engine, transactionHandler *handlers.TransactionHandler, typeHandler *handlers.TypeHandler) {
 	router.Use(middleware.Logger())
 
 	router.GET("/healthcheck", func(c *gin.Context) {
@@ -23,12 +23,13 @@ func SetupRoutes(router *gin.Engine, transactionHandler *handlers.TransactionHan
 	}
 
 	{
-		category := v1.Group("/category")
-		category.GET("/:category_id/average-spend", transactionHandler.GetAverageSpendByCategory)
+		categories := v1.Group("/categories")
+		categories.GET("/:category_id/average", transactionHandler.GetAverageByCategory)
 	}
 
 	{
-		transactionType := v1.Group("/type")
-		transactionType.GET("/:type_id/average-spend", transactionHandler.GetAverageSpendByCategory)
+		types := v1.Group("/types")
+		types.GET("/average", typeHandler.GetAverageByType)
+		//types.GET("/:type_id/average", typeHandler.GetAverageByType) // For future use
 	}
 }

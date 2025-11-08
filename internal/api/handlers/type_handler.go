@@ -8,13 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type TransactionType string
-
-const (
-	Expense TransactionType = "expense"
-	Income  TransactionType = "income"
-)
-
 type TypeHandler struct {
 	repo    *repository.TypeRepository
 	service *service.TypeService
@@ -36,12 +29,12 @@ func (h *TypeHandler) GetTypes(c *gin.Context) {
 	c.JSON(http.StatusOK, types)
 }
 
-func (h *TypeHandler) GetAverageSpendByType(c *gin.Context) {
-	averageSpend, err := h.service.GetAverageSpendByType(c.Request.Context())
+func (h *TypeHandler) GetAverageByType(c *gin.Context) {
+	average, err := h.service.GetAverageByType(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, averageSpend)
+	c.JSON(http.StatusOK, average)
 }
