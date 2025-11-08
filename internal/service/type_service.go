@@ -3,11 +3,14 @@ package service
 import (
 	"analytics/internal/repository"
 	"context"
+	"fmt"
+	"time"
 )
 
 type AverageType struct {
 	TypeID   int
 	TypeName string
+	Month    time.Time
 	Average  float64
 }
 
@@ -42,32 +45,47 @@ func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, erro
 		typeMap[t.ID] = string(t.Name)
 	}
 
-	spendByType := make(map[int]struct {
+	spendByTypeAndMonth := make(map[string]struct {
 		Total float64
 		Count int
 	})
 
 	for _, tx := range transactions {
-		stats := spendByType[tx.TypeID]
+		monthKey := fmt.Sprintf("%d-%d-%d",
+			tx.TypeID,
+			tx.Date.Year(),
+			tx.Date.Month())
+
+		stats := spendByTypeAndMonth[monthKey]
 		stats.Total += tx.Amount
 		stats.Count++
-		spendByType[tx.TypeID] = stats
+		spendByTypeAndMonth[monthKey] = stats
 	}
 
 	for _, tx := range recurringTransactions {
-		stats := spendByType[tx.TypeID]
+		monthKey := fmt.Sprintf("%d-%d-%d",
+			tx.TypeID,
+			tx.StartDate.Year(),
+			tx.StartDate.Month())
+
+		stats := spendByTypeAndMonth[monthKey]
 		stats.Total += tx.Amount
 		stats.Count++
-		spendByType[tx.TypeID] = stats
+		spendByTypeAndMonth[monthKey] = stats
 	}
 
 	var result []AverageType
-	for typeID, stats := range spendByType {
+	for key, stats := range spendByTypeAndMonth {
+		var typeID, year, month int
+		fmt.Sscanf(key, "%d-%d-%d", &typeID, &year, &month)
+
+		date := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 		average := stats.Total / float64(stats.Count)
 
 		result = append(result, AverageType{
 			TypeID:   typeID,
 			TypeName: typeMap[typeID],
+			Month:    date,
 			Average:  average,
 		})
 	}

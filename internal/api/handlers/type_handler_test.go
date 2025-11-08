@@ -9,11 +9,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-// Mock repositories for handler testing
 type mockTypeRepoForHandler struct {
 	types []domain.Type
 	err   error
@@ -51,10 +51,11 @@ func (m *mockRecurringRepoForHandler) GetAllRecurringTransactions(ctx context.Co
 }
 
 func TestGetAverageByType_Handler_Success(t *testing.T) {
-	// Set Gin to test mode
 	gin.SetMode(gin.TestMode)
 
-	// Arrange
+	jan2024 := time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC)
+	feb2024 := time.Date(2024, 2, 10, 0, 0, 0, 0, time.UTC)
+
 	mockTypeRepo := &mockTypeRepoForHandler{
 		types: []domain.Type{
 			{ID: 1, Name: domain.Expense},
@@ -64,58 +65,49 @@ func TestGetAverageByType_Handler_Success(t *testing.T) {
 
 	mockTransactionRepo := &mockTransactionRepoForHandler{
 		transactions: []domain.Transaction{
-			{ID: 1, TypeID: 1, Amount: 100.0},
-			{ID: 2, TypeID: 1, Amount: 200.0},
-			{ID: 3, TypeID: 2, Amount: 3000.0},
+			{ID: 1, TypeID: 1, Amount: 100.0, Date: jan2024},
+			{ID: 2, TypeID: 1, Amount: 200.0, Date: jan2024},
+			{ID: 3, TypeID: 2, Amount: 3000.0, Date: feb2024},
 		},
 	}
 
 	mockRecurringRepo := &mockRecurringRepoForHandler{
 		recurringTransactions: []domain.RecurringTransaction{
-			{ID: 1, TypeID: 1, Amount: 300.0, EndDate: sql.NullTime{Valid: false}},
+			{ID: 1, TypeID: 1, Amount: 300.0, StartDate: jan2024, EndDate: sql.NullTime{Valid: false}},
 		},
 	}
 
 	typeService := service.NewTypeService(mockTypeRepo, mockTransactionRepo, mockRecurringRepo)
 	handler := NewTypeHandler(mockTypeRepo, typeService)
 
-	// Create test router
 	router := gin.New()
 	router.GET("/api/v1/types/average", handler.GetAverageByType)
 
-	// Create request
 	req, err := http.NewRequest("GET", "/api/v1/types/average", nil)
 	if err != nil {
 		t.Fatalf("Failed to create request: %v", err)
 	}
 
-	// Create response recorder
 	w := httptest.NewRecorder()
 
-	// Act
 	router.ServeHTTP(w, req)
 
-	// Assert
 	if w.Code != http.StatusOK {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, w.Code)
 	}
 
-	// Parse response
 	var results []service.AverageType
 	err = json.Unmarshal(w.Body.Bytes(), &results)
 	if err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
-	// Verify we got results for both types
 	if len(results) != 2 {
-		t.Fatalf("Expected 2 results, got %d", len(results))
+		t.Fatalf("Expected 2 results (Expense-Jan, Income-Feb), got %d", len(results))
 	}
 
-	// Verify averages are calculated correctly
 	for _, result := range results {
-		if result.TypeID == 1 {
-			// Expense: (100 + 200 + 300) / 3 = 200
+		if result.TypeID == 1 && result.Month.Month() == time.January {
 			expectedAvg := 200.0
 			if result.Average != expectedAvg {
 				t.Errorf("Expected expense average %f, got %f", expectedAvg, result.Average)
@@ -123,8 +115,7 @@ func TestGetAverageByType_Handler_Success(t *testing.T) {
 			if result.TypeName != string(domain.Expense) {
 				t.Errorf("Expected type name %s, got %s", domain.Expense, result.TypeName)
 			}
-		} else if result.TypeID == 2 {
-			// Income: 3000 / 1 = 3000
+		} else if result.TypeID == 2 && result.Month.Month() == time.February {
 			expectedAvg := 3000.0
 			if result.Average != expectedAvg {
 				t.Errorf("Expected income average %f, got %f", expectedAvg, result.Average)
@@ -137,10 +128,8 @@ func TestGetAverageByType_Handler_Success(t *testing.T) {
 }
 
 func TestGetAverageByType_Handler_WithNoTransactions(t *testing.T) {
-	// Set Gin to test mode
 	gin.SetMode(gin.TestMode)
 
-	// Arrange
 	mockTypeRepo := &mockTypeRepoForHandler{
 		types: []domain.Type{
 			{ID: 1, Name: domain.Expense},
@@ -158,58 +147,51 @@ func TestGetAverageByType_Handler_WithNoTransactions(t *testing.T) {
 	typeService := service.NewTypeService(mockTypeRepo, mockTransactionRepo, mockRecurringRepo)
 	handler := NewTypeHandler(mockTypeRepo, typeService)
 
-	// Create test router
 	router := gin.New()
 	router.GET("/api/v1/types/average", handler.GetAverageByType)
 
-	// Create request
 	req, err := http.NewRequest("GET", "/api/v1/types/average", nil)
 	if err != nil {
 		t.Fatalf("Failed to create request: %v", err)
 	}
 
-	// Create response recorder
 	w := httptest.NewRecorder()
 
-	// Act
 	router.ServeHTTP(w, req)
 
-	// Assert
 	if w.Code != http.StatusOK {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, w.Code)
 	}
 
-	// Parse response
 	var results []service.AverageType
 	err = json.Unmarshal(w.Body.Bytes(), &results)
 	if err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
-	// Should return empty array
 	if len(results) != 0 {
 		t.Errorf("Expected 0 results, got %d", len(results))
 	}
 }
 
 func TestGetAverageByType_Handler_HandlesNullableFields(t *testing.T) {
-	// Set Gin to test mode
 	gin.SetMode(gin.TestMode)
 
-	// Arrange - This test specifically verifies NULL handling
+	may2024 := time.Date(2024, 5, 20, 0, 0, 0, 0, time.UTC)
+
 	mockTypeRepo := &mockTypeRepoForHandler{
 		types: []domain.Type{
 			{
 				ID:        1,
 				Name:      domain.Expense,
-				DeletedAt: sql.NullTime{Valid: false}, // NULL DeletedAt
+				DeletedAt: sql.NullTime{Valid: false},
 			},
 		},
 	}
 
 	mockTransactionRepo := &mockTransactionRepoForHandler{
 		transactions: []domain.Transaction{
-			{ID: 1, TypeID: 1, Amount: 500.0},
+			{ID: 1, TypeID: 1, Amount: 500.0, Date: may2024},
 		},
 	}
 
@@ -219,8 +201,9 @@ func TestGetAverageByType_Handler_HandlesNullableFields(t *testing.T) {
 				ID:             1,
 				TypeID:         1,
 				Amount:         100.0,
-				EndDate:        sql.NullTime{Valid: false},        // NULL EndDate
-				LastOccurrence: sql.NullTime{Valid: false},        // NULL LastOccurrence
+				StartDate:      may2024,
+				EndDate:        sql.NullTime{Valid: false},
+				LastOccurrence: sql.NullTime{Valid: false},
 			},
 		},
 	}
@@ -228,28 +211,22 @@ func TestGetAverageByType_Handler_HandlesNullableFields(t *testing.T) {
 	typeService := service.NewTypeService(mockTypeRepo, mockTransactionRepo, mockRecurringRepo)
 	handler := NewTypeHandler(mockTypeRepo, typeService)
 
-	// Create test router
 	router := gin.New()
 	router.GET("/api/v1/types/average", handler.GetAverageByType)
 
-	// Create request
 	req, err := http.NewRequest("GET", "/api/v1/types/average", nil)
 	if err != nil {
 		t.Fatalf("Failed to create request: %v", err)
 	}
 
-	// Create response recorder
 	w := httptest.NewRecorder()
 
-	// Act
 	router.ServeHTTP(w, req)
 
-	// Assert
 	if w.Code != http.StatusOK {
 		t.Errorf("Expected status code %d, got %d. Body: %s", http.StatusOK, w.Code, w.Body.String())
 	}
 
-	// Parse response
 	var results []service.AverageType
 	err = json.Unmarshal(w.Body.Bytes(), &results)
 	if err != nil {
@@ -260,9 +237,12 @@ func TestGetAverageByType_Handler_HandlesNullableFields(t *testing.T) {
 		t.Fatalf("Expected 1 result, got %d", len(results))
 	}
 
-	// Verify average is correct: (500 + 100) / 2 = 300
 	expectedAvg := 300.0
 	if results[0].Average != expectedAvg {
 		t.Errorf("Expected average %f, got %f", expectedAvg, results[0].Average)
+	}
+
+	if results[0].Month.Month() != time.May || results[0].Month.Year() != 2024 {
+		t.Errorf("Expected month May 2024, got %s", results[0].Month)
 	}
 }

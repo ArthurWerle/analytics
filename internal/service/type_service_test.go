@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-// Mock repositories for testing
 type mockTypeRepository struct {
 	types []domain.Type
 	err   error
@@ -46,8 +45,9 @@ func (m *mockRecurringTransactionRepository) GetAllRecurringTransactions(ctx con
 }
 
 func TestGetAverageByType_WithOnlyRegularTransactions(t *testing.T) {
-	// Arrange
 	ctx := context.Background()
+	jan2024 := time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC)
+	feb2024 := time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC)
 
 	mockTypeRepo := &mockTypeRepository{
 		types: []domain.Type{
@@ -58,10 +58,10 @@ func TestGetAverageByType_WithOnlyRegularTransactions(t *testing.T) {
 
 	mockTransactionRepo := &mockTransactionRepository{
 		transactions: []domain.Transaction{
-			{ID: 1, TypeID: 1, Amount: 100.0, Date: time.Now()},
-			{ID: 2, TypeID: 1, Amount: 200.0, Date: time.Now()},
-			{ID: 3, TypeID: 2, Amount: 1000.0, Date: time.Now()},
-			{ID: 4, TypeID: 2, Amount: 2000.0, Date: time.Now()},
+			{ID: 1, TypeID: 1, Amount: 100.0, Date: jan2024},
+			{ID: 2, TypeID: 1, Amount: 200.0, Date: jan2024},
+			{ID: 3, TypeID: 2, Amount: 1000.0, Date: feb2024},
+			{ID: 4, TypeID: 2, Amount: 2000.0, Date: feb2024},
 		},
 	}
 
@@ -71,44 +71,40 @@ func TestGetAverageByType_WithOnlyRegularTransactions(t *testing.T) {
 
 	service := NewTypeService(mockTypeRepo, mockTransactionRepo, mockRecurringRepo)
 
-	// Act
 	results, err := service.GetAverageByType(ctx)
 
-	// Assert
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
 	if len(results) != 2 {
-		t.Fatalf("Expected 2 results, got %d", len(results))
+		t.Fatalf("Expected 2 results (one per type per month), got %d", len(results))
 	}
 
-	// Find expense and income averages
-	var expenseAvg, incomeAvg float64
 	for _, result := range results {
-		if result.TypeID == 1 {
-			expenseAvg = result.Average
-		} else if result.TypeID == 2 {
-			incomeAvg = result.Average
+		if result.TypeID == 1 && result.Month.Month() == time.January {
+			expectedAvg := 150.0
+			if result.Average != expectedAvg {
+				t.Errorf("Expected expense average in January %f, got %f", expectedAvg, result.Average)
+			}
+			if result.TypeName != string(domain.Expense) {
+				t.Errorf("Expected type name %s, got %s", domain.Expense, result.TypeName)
+			}
+		} else if result.TypeID == 2 && result.Month.Month() == time.February {
+			expectedAvg := 1500.0
+			if result.Average != expectedAvg {
+				t.Errorf("Expected income average in February %f, got %f", expectedAvg, result.Average)
+			}
+			if result.TypeName != string(domain.Income) {
+				t.Errorf("Expected type name %s, got %s", domain.Income, result.TypeName)
+			}
 		}
-	}
-
-	// Expected: Expense average = (100 + 200) / 2 = 150
-	expectedExpenseAvg := 150.0
-	if expenseAvg != expectedExpenseAvg {
-		t.Errorf("Expected expense average %f, got %f", expectedExpenseAvg, expenseAvg)
-	}
-
-	// Expected: Income average = (1000 + 2000) / 2 = 1500
-	expectedIncomeAvg := 1500.0
-	if incomeAvg != expectedIncomeAvg {
-		t.Errorf("Expected income average %f, got %f", expectedIncomeAvg, incomeAvg)
 	}
 }
 
 func TestGetAverageByType_WithBothRegularAndRecurringTransactions(t *testing.T) {
-	// Arrange
 	ctx := context.Background()
+	jan2024 := time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC)
 
 	mockTypeRepo := &mockTypeRepository{
 		types: []domain.Type{
@@ -118,8 +114,8 @@ func TestGetAverageByType_WithBothRegularAndRecurringTransactions(t *testing.T) 
 
 	mockTransactionRepo := &mockTransactionRepository{
 		transactions: []domain.Transaction{
-			{ID: 1, TypeID: 1, Amount: 100.0, Date: time.Now()},
-			{ID: 2, TypeID: 1, Amount: 200.0, Date: time.Now()},
+			{ID: 1, TypeID: 1, Amount: 100.0, Date: jan2024},
+			{ID: 2, TypeID: 1, Amount: 200.0, Date: jan2024},
 		},
 	}
 
@@ -129,18 +125,16 @@ func TestGetAverageByType_WithBothRegularAndRecurringTransactions(t *testing.T) 
 				ID:        1,
 				TypeID:    1,
 				Amount:    300.0,
-				StartDate: time.Now(),
-				EndDate:   sql.NullTime{Valid: false}, // NULL end date
+				StartDate: jan2024,
+				EndDate:   sql.NullTime{Valid: false},
 			},
 		},
 	}
 
 	service := NewTypeService(mockTypeRepo, mockTransactionRepo, mockRecurringRepo)
 
-	// Act
 	results, err := service.GetAverageByType(ctx)
 
-	// Assert
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -149,20 +143,21 @@ func TestGetAverageByType_WithBothRegularAndRecurringTransactions(t *testing.T) 
 		t.Fatalf("Expected 1 result, got %d", len(results))
 	}
 
-	// Expected: Average = (100 + 200 + 300) / 3 = 200
 	expectedAvg := 200.0
 	if results[0].Average != expectedAvg {
 		t.Errorf("Expected average %f, got %f", expectedAvg, results[0].Average)
 	}
 
-	// Verify type name is correct
 	if results[0].TypeName != string(domain.Expense) {
 		t.Errorf("Expected type name %s, got %s", domain.Expense, results[0].TypeName)
+	}
+
+	if results[0].Month.Month() != time.January || results[0].Month.Year() != 2024 {
+		t.Errorf("Expected month January 2024, got %s", results[0].Month)
 	}
 }
 
 func TestGetAverageByType_WithNoTransactions(t *testing.T) {
-	// Arrange
 	ctx := context.Background()
 
 	mockTypeRepo := &mockTypeRepository{
@@ -181,23 +176,20 @@ func TestGetAverageByType_WithNoTransactions(t *testing.T) {
 
 	service := NewTypeService(mockTypeRepo, mockTransactionRepo, mockRecurringRepo)
 
-	// Act
 	results, err := service.GetAverageByType(ctx)
 
-	// Assert
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	// Should return empty results when there are no transactions
 	if len(results) != 0 {
 		t.Errorf("Expected 0 results, got %d", len(results))
 	}
 }
 
 func TestGetAverageByType_WithSingleTransaction(t *testing.T) {
-	// Arrange
 	ctx := context.Background()
+	march2024 := time.Date(2024, 3, 10, 0, 0, 0, 0, time.UTC)
 
 	mockTypeRepo := &mockTypeRepository{
 		types: []domain.Type{
@@ -207,7 +199,7 @@ func TestGetAverageByType_WithSingleTransaction(t *testing.T) {
 
 	mockTransactionRepo := &mockTransactionRepository{
 		transactions: []domain.Transaction{
-			{ID: 1, TypeID: 1, Amount: 250.50, Date: time.Now()},
+			{ID: 1, TypeID: 1, Amount: 250.50, Date: march2024},
 		},
 	}
 
@@ -217,10 +209,8 @@ func TestGetAverageByType_WithSingleTransaction(t *testing.T) {
 
 	service := NewTypeService(mockTypeRepo, mockTransactionRepo, mockRecurringRepo)
 
-	// Act
 	results, err := service.GetAverageByType(ctx)
 
-	// Assert
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -229,16 +219,19 @@ func TestGetAverageByType_WithSingleTransaction(t *testing.T) {
 		t.Fatalf("Expected 1 result, got %d", len(results))
 	}
 
-	// Average of single transaction should be the transaction amount
 	expectedAvg := 250.50
 	if results[0].Average != expectedAvg {
 		t.Errorf("Expected average %f, got %f", expectedAvg, results[0].Average)
 	}
+
+	if results[0].Month.Month() != time.March || results[0].Month.Year() != 2024 {
+		t.Errorf("Expected month March 2024, got %s", results[0].Month)
+	}
 }
 
 func TestGetAverageByType_VerifiesTypeNamesAreMapped(t *testing.T) {
-	// Arrange
 	ctx := context.Background()
+	april2024 := time.Date(2024, 4, 5, 0, 0, 0, 0, time.UTC)
 
 	mockTypeRepo := &mockTypeRepository{
 		types: []domain.Type{
@@ -249,8 +242,8 @@ func TestGetAverageByType_VerifiesTypeNamesAreMapped(t *testing.T) {
 
 	mockTransactionRepo := &mockTransactionRepository{
 		transactions: []domain.Transaction{
-			{ID: 1, TypeID: 1, Amount: 100.0, Date: time.Now()},
-			{ID: 2, TypeID: 2, Amount: 500.0, Date: time.Now()},
+			{ID: 1, TypeID: 1, Amount: 100.0, Date: april2024},
+			{ID: 2, TypeID: 2, Amount: 500.0, Date: april2024},
 		},
 	}
 
@@ -260,15 +253,16 @@ func TestGetAverageByType_VerifiesTypeNamesAreMapped(t *testing.T) {
 
 	service := NewTypeService(mockTypeRepo, mockTransactionRepo, mockRecurringRepo)
 
-	// Act
 	results, err := service.GetAverageByType(ctx)
 
-	// Assert
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	// Verify that type names are correctly mapped
+	if len(results) != 2 {
+		t.Fatalf("Expected 2 results, got %d", len(results))
+	}
+
 	typeNames := make(map[int]string)
 	for _, result := range results {
 		typeNames[result.TypeID] = result.TypeName
