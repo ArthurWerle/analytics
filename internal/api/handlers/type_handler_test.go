@@ -108,7 +108,7 @@ func TestGetAverageByType_Handler_Success(t *testing.T) {
 
 	for _, result := range results {
 		if result.TypeID == 1 {
-			expectedAvg := 200.0
+			expectedAvg := 600.0
 			if result.Average != expectedAvg {
 				t.Errorf("Expected expense average %f, got %f", expectedAvg, result.Average)
 			}
@@ -237,7 +237,7 @@ func TestGetAverageByType_Handler_HandlesNullableFields(t *testing.T) {
 		t.Fatalf("Expected 1 result, got %d", len(results))
 	}
 
-	expectedAvg := 300.0
+	expectedAvg := 600.0
 	if results[0].Average != expectedAvg {
 		t.Errorf("Expected average %f, got %f", expectedAvg, results[0].Average)
 	}

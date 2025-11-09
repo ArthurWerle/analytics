@@ -84,7 +84,7 @@ func TestGetAverageByType_WithOnlyRegularTransactions(t *testing.T) {
 
 	for _, result := range results {
 		if result.TypeID == 1 {
-			expectedAvg := (150.0 + 300.0) / 2
+			expectedAvg := (300.0 + 300.0) / 2
 			if result.Average != expectedAvg {
 				t.Errorf("Expected expense average %f, got %f", expectedAvg, result.Average)
 			}
@@ -144,7 +144,7 @@ func TestGetAverageByType_WithBothRegularAndRecurringTransactions(t *testing.T) 
 		t.Fatalf("Expected 1 result, got %d", len(results))
 	}
 
-	expectedAvg := 200.0
+	expectedAvg := 600.0
 	if results[0].Average != expectedAvg {
 		t.Errorf("Expected average %f, got %f", expectedAvg, results[0].Average)
 	}

@@ -43,10 +43,7 @@ func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, erro
 		typeMap[t.ID] = string(t.Name)
 	}
 
-	spendByTypeAndMonth := make(map[string]struct {
-		Total float64
-		Count int
-	})
+	monthlySumsByType := make(map[string]float64)
 
 	for _, tx := range transactions {
 		monthKey := fmt.Sprintf("%d-%d-%d",
@@ -54,10 +51,7 @@ func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, erro
 			tx.Date.Year(),
 			tx.Date.Month())
 
-		stats := spendByTypeAndMonth[monthKey]
-		stats.Total += tx.Amount
-		stats.Count++
-		spendByTypeAndMonth[monthKey] = stats
+		monthlySumsByType[monthKey] += tx.Amount
 	}
 
 	for _, tx := range recurringTransactions {
@@ -66,34 +60,30 @@ func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, erro
 			tx.StartDate.Year(),
 			tx.StartDate.Month())
 
-		stats := spendByTypeAndMonth[monthKey]
-		stats.Total += tx.Amount
-		stats.Count++
-		spendByTypeAndMonth[monthKey] = stats
+		monthlySumsByType[monthKey] += tx.Amount
 	}
 
-	monthlyAveragesByType := make(map[int][]float64)
+	monthlySumsByTypeID := make(map[int][]float64)
 
-	for key, stats := range spendByTypeAndMonth {
+	for key, sum := range monthlySumsByType {
 		var typeID, year, month int
 		fmt.Sscanf(key, "%d-%d-%d", &typeID, &year, &month)
 
-		monthlyAverage := stats.Total / float64(stats.Count)
-		monthlyAveragesByType[typeID] = append(monthlyAveragesByType[typeID], monthlyAverage)
+		monthlySumsByTypeID[typeID] = append(monthlySumsByTypeID[typeID], sum)
 	}
 
 	var result []AverageType
-	for typeID, monthlyAverages := range monthlyAveragesByType {
-		var sum float64
-		for _, avg := range monthlyAverages {
-			sum += avg
+	for typeID, monthlySums := range monthlySumsByTypeID {
+		var total float64
+		for _, sum := range monthlySums {
+			total += sum
 		}
-		overallAverage := sum / float64(len(monthlyAverages))
+		average := total / float64(len(monthlySums))
 
 		result = append(result, AverageType{
 			TypeID:   typeID,
 			TypeName: typeMap[typeID],
-			Average:  overallAverage,
+			Average:  average,
 		})
 	}
 
