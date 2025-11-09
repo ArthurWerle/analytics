@@ -36,11 +36,12 @@ func main() {
 	)
 
 	typeService := service.NewTypeService(typeRepo, transactionRepo, recurringRepo)
+	categoryService := service.NewCategoryService(categoryRepo, transactionRepo, recurringRepo)
 
 	transactionHandler := handlers.NewTransactionHandler(transactionRepo, transactionAnalysisService)
 	typeHandler := handlers.NewTypeHandler(typeRepo, typeService)
+	categoryHandler := handlers.NewCategoryHandler(categoryRepo, categoryService)
 
-	// Set Gin to release mode in production
 	if os.Getenv("GIN_MODE") != "debug" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -48,9 +49,9 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
 
-	router.SetTrustedProxies([]string{"172.16.0.0/12", "192.168.0.0/16"}) // Docker network ranges
+	router.SetTrustedProxies([]string{"172.16.0.0/12", "192.168.0.0/16"})
 
-	routes.SetupRoutes(router, transactionHandler, typeHandler)
+	routes.SetupRoutes(router, transactionHandler, typeHandler, categoryHandler)
 
 	router.Run("0.0.0.0:1234")
 }
