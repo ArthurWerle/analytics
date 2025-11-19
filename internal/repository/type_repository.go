@@ -4,14 +4,14 @@ import (
 	"analytics/internal/domain"
 	"context"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type TypeRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewTypeRepository(db *pgx.Conn) *TypeRepository {
+func NewTypeRepository(db *pgxpool.Pool) *TypeRepository {
 	return &TypeRepository{db: db}
 }
 

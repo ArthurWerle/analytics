@@ -23,12 +23,12 @@ func main() {
 	}
 
 	databaseService := &db.DatabaseService{}
-	conn := databaseService.GetConnection()
+	pool := databaseService.GetPool()
 
-	transactionRepo := repository.NewTransactionRepository(conn)
-	categoryRepo := repository.NewCategoryRepository(conn)
-	typeRepo := repository.NewTypeRepository(conn)
-	recurringRepo := repository.NewRecurringTransactionRepository(conn)
+	transactionRepo := repository.NewTransactionRepository(pool)
+	categoryRepo := repository.NewCategoryRepository(pool)
+	typeRepo := repository.NewTypeRepository(pool)
+	recurringRepo := repository.NewRecurringTransactionRepository(pool)
 
 	transactionAnalysisService := service.NewTransactionAnalysisService(
 		transactionRepo,

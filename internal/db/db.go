@@ -5,16 +5,16 @@ import (
 	"log"
 	"os"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DatabaseService struct {
-	conn *pgx.Conn
+	pool *pgxpool.Pool
 }
 
-func (db *DatabaseService) GetConnection() *pgx.Conn {
-	if db.conn != nil {
-		return db.conn
+func (db *DatabaseService) GetPool() *pgxpool.Pool {
+	if db.pool != nil {
+		return db.pool
 	}
 
 	dbURL := os.Getenv("DATABASE_URL")
@@ -22,18 +22,17 @@ func (db *DatabaseService) GetConnection() *pgx.Conn {
 		log.Fatalf("DATABASE_URL is not set")
 	}
 
-	conn, err := pgx.Connect(context.Background(), dbURL)
+	pool, err := pgxpool.New(context.Background(), dbURL)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
 
-	db.conn = conn
-	return conn
+	db.pool = pool
+	return pool
 }
 
-func (db *DatabaseService) Close() error {
-	if db.conn != nil {
-		return db.conn.Close(context.Background())
+func (db *DatabaseService) Close() {
+	if db.pool != nil {
+		db.pool.Close()
 	}
-	return nil
 }

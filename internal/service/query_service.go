@@ -178,9 +178,9 @@ func (q *QueryService) GetQuery(prompt string) string {
 
 func (q *QueryService) RunQuery() (pgx.Rows, error) {
 	databaseService := &db.DatabaseService{}
-	conn := databaseService.GetConnection()
+	pool := databaseService.GetPool()
 
-	rows, err := conn.Query(context.Background(), q.query)
+	rows, err := pool.Query(context.Background(), q.query)
 	if err != nil {
 		return nil, err
 	}

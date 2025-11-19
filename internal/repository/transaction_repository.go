@@ -4,14 +4,14 @@ import (
 	"analytics/internal/domain"
 	"context"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type TransactionRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewTransactionRepository(db *pgx.Conn) *TransactionRepository {
+func NewTransactionRepository(db *pgxpool.Pool) *TransactionRepository {
 	return &TransactionRepository{db: db}
 }
 
