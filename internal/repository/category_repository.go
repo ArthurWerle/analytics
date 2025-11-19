@@ -4,14 +4,14 @@ import (
 	"analytics/internal/domain"
 	"context"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type CategoryRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewCategoryRepository(db *pgx.Conn) *CategoryRepository {
+func NewCategoryRepository(db *pgxpool.Pool) *CategoryRepository {
 	return &CategoryRepository{db: db}
 }
 

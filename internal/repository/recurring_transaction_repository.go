@@ -4,14 +4,14 @@ import (
 	"analytics/internal/domain"
 	"context"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type RecurringTransactionRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewRecurringTransactionRepository(db *pgx.Conn) *RecurringTransactionRepository {
+func NewRecurringTransactionRepository(db *pgxpool.Pool) *RecurringTransactionRepository {
 	return &RecurringTransactionRepository{db: db}
 }
 
