@@ -27,21 +27,17 @@ func main() {
 
 	transactionRepo := repository.NewTransactionRepository(pool)
 	categoryRepo := repository.NewCategoryRepository(pool)
-	typeRepo := repository.NewTypeRepository(pool)
-	recurringRepo := repository.NewRecurringTransactionRepository(pool)
 
 	transactionAnalysisService := service.NewTransactionAnalysisService(
 		transactionRepo,
-		recurringRepo,
 		categoryRepo,
-		typeRepo,
 	)
 
-	typeService := service.NewTypeService(typeRepo, transactionRepo, recurringRepo)
-	categoryService := service.NewCategoryService(categoryRepo, transactionRepo, recurringRepo)
+	typeService := service.NewTypeService(transactionRepo)
+	categoryService := service.NewCategoryService(categoryRepo, transactionRepo)
 
 	transactionHandler := handlers.NewTransactionHandler(transactionRepo, transactionAnalysisService)
-	typeHandler := handlers.NewTypeHandler(typeRepo, typeService)
+	typeHandler := handlers.NewTypeHandler(typeService)
 	categoryHandler := handlers.NewCategoryHandler(categoryRepo, categoryService)
 
 	if os.Getenv("GIN_MODE") != "debug" {

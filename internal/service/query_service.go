@@ -19,50 +19,24 @@ const SYSTEM_PROMPT_TO_GET_QUERY = `
 	Based on the following database schema:
 
 	------------------------------
-	-- PostgreSQL database dump --
+	-- PostgreSQL database schema --
 	------------------------------
 
-	
-	CREATE TABLE types (
+	create type transaction_type as enum ('income', 'expense');;
+
+	TABLE transactions (
 		id SERIAL PRIMARY KEY,
-		name VARCHAR(255) NOT NULL,
-		description TEXT,
-		created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-	);
-
-
-	CREATE TABLE categories (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(255) NOT NULL,
-		description TEXT,
-		color VARCHAR(50),
-		created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-	);
-
-
-	CREATE TABLE transactions (
-		id SERIAL PRIMARY KEY,
-		category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+		migrated_id INTEGER,
+		is_recurring BOOLEAN NOT NULL DEFAULT FALSE,
+		category_id INTEGER,
 		amount DECIMAL(12, 2) NOT NULL,
-		type_id INTEGER REFERENCES types(id) ON DELETE SET NULL,
+		type transaction_type NOT NULL,
 		description TEXT,
 		date TIMESTAMP WITH TIME ZONE,
-		created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-	);
-
-	CREATE TABLE recurring_transactions (
-		id SERIAL PRIMARY KEY,
-		category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
-		amount DECIMAL(12, 2) NOT NULL,
-		type_id INTEGER REFERENCES types(id) ON DELETE SET NULL,
-		description TEXT,
-		frequency VARCHAR(50) NOT NULL,
-		start_date DATE NOT NULL,
+		frequency VARCHAR(50),
+		start_date DATE,
 		end_date DATE,
-		last_occurrence DATE,
+		created_by_id INTEGER NOT NULL,
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 	);
@@ -100,10 +74,7 @@ const SYSTEM_PROMPT_TO_GET_QUERY = `
 	--------------------------------------
 
 	Instructions:
-		- 'recurring_transactions' is meant to store recurrent transactions. For example: subscriptions, monthly fees, yearly payments etc.
-		- transactions is just for common transactions.
-		- To get the total value spent for a month, you'll need to check both tables, because some values might be recurrent.
-		- The types table is only meant to store 2 different types: 'income' or 'expense'.
+		- The types are only meant to store 2 different types: 'income' or 'expense'.
 		- Note that the "Salary" category is of type "income", so it should never be used for questions for expenses. Always ensure to be using
 		transactions from type "expense" for it.
 

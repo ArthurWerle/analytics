@@ -18,22 +18,16 @@ type AverageCategorySpendByMonth struct {
 
 type TransactionAnalysisService struct {
 	transactionRepo *repository.TransactionRepository
-	recurringRepo   *repository.RecurringTransactionRepository
 	categoryRepo    *repository.CategoryRepository
-	typeRepo        *repository.TypeRepository
 }
 
 func NewTransactionAnalysisService(
 	transactionRepo *repository.TransactionRepository,
-	recurringRepo *repository.RecurringTransactionRepository,
 	categoryRepo *repository.CategoryRepository,
-	typeRepo *repository.TypeRepository,
 ) *TransactionAnalysisService {
 	return &TransactionAnalysisService{
 		transactionRepo: transactionRepo,
-		recurringRepo:   recurringRepo,
 		categoryRepo:    categoryRepo,
-		typeRepo:        typeRepo,
 	}
 }
 
@@ -42,11 +36,6 @@ func (r *TransactionAnalysisService) GetAverageSpendByCategory(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
-
-	// recurringTransactions, err := r.recurringRepo.GetAllRecurringTransactions(ctx)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	categories, err := r.categoryRepo.GetAllCategories(ctx)
 	if err != nil {
@@ -63,10 +52,7 @@ func (r *TransactionAnalysisService) GetAverageSpendByCategory(ctx context.Conte
 		Count int
 	})
 
-	processRegularTransactions(transactions, spendByMonth)
-
-	// Process recurring transactions
-	// processRecurringTransactions(recurringTransactions, spendByMonth)
+	processTransaction(transactions, spendByMonth)
 
 	var result []AverageCategorySpendByMonth
 	for key, value := range spendByMonth {
@@ -88,12 +74,12 @@ func (r *TransactionAnalysisService) GetAverageSpendByCategory(ctx context.Conte
 	return result, nil
 }
 
-func processRegularTransactions(transactions []domain.Transaction, spendByMonth map[string]struct {
+func processTransaction(transactions []domain.Transaction, spendByMonth map[string]struct {
 	Total float64
 	Count int
 }) {
 	for _, tx := range transactions {
-		if tx.TypeID != 3 {
+		if tx.Type != domain.Expense {
 			continue
 		}
 
@@ -101,27 +87,6 @@ func processRegularTransactions(transactions []domain.Transaction, spendByMonth 
 			tx.CategoryID,
 			tx.Date.Year(),
 			tx.Date.Month())
-
-		monthly := spendByMonth[monthKey]
-		monthly.Total += tx.Amount
-		monthly.Count++
-		spendByMonth[monthKey] = monthly
-	}
-}
-
-func processRecurringTransactions(transactions []domain.RecurringTransaction, spendByMonth map[string]struct {
-	Total float64
-	Count int
-}) {
-	for _, tx := range transactions {
-		if tx.TypeID != 3 {
-			continue
-		}
-
-		monthKey := fmt.Sprintf("%d-%d-%d",
-			tx.CategoryID,
-			time.Now().Year(),
-			time.Now().Month())
 
 		monthly := spendByMonth[monthKey]
 		monthly.Total += tx.Amount

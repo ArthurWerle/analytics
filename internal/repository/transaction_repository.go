@@ -21,10 +21,12 @@ func (r *TransactionRepository) GetAllTransactions(ctx context.Context) ([]domai
 			id,
 			category_id,
 			amount,
-			type_id,
+			type,
 			updated_at,
 			date,
 			created_at,
+		    start_date,
+		    end_date,
 			description
 		FROM transactions
 	`)
@@ -40,10 +42,12 @@ func (r *TransactionRepository) GetAllTransactions(ctx context.Context) ([]domai
 			&transaction.ID,
 			&transaction.CategoryID,
 			&transaction.Amount,
-			&transaction.TypeID,
+			&transaction.Type,
 			&transaction.UpdatedAt,
 			&transaction.Date,
 			&transaction.CreatedAt,
+			&transaction.StartDate,
+			&transaction.EndDate,
 			&transaction.Description,
 		)
 		if err != nil {

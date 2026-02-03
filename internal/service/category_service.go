@@ -15,20 +15,14 @@ type AverageCategory struct {
 type CategoryService struct {
 	categoryRepo    repository.CategoryRepositoryInterface
 	transactionRepo repository.TransactionRepositoryInterface
-	recurringRepo   repository.RecurringTransactionRepositoryInterface
 }
 
-func NewCategoryService(categoryRepo repository.CategoryRepositoryInterface, transactionRepo repository.TransactionRepositoryInterface, recurringRepo repository.RecurringTransactionRepositoryInterface) *CategoryService {
-	return &CategoryService{categoryRepo: categoryRepo, transactionRepo: transactionRepo, recurringRepo: recurringRepo}
+func NewCategoryService(categoryRepo repository.CategoryRepositoryInterface, transactionRepo repository.TransactionRepositoryInterface) *CategoryService {
+	return &CategoryService{categoryRepo: categoryRepo, transactionRepo: transactionRepo}
 }
 
 func (r *CategoryService) GetAverageByCategory(ctx context.Context) ([]AverageCategory, error) {
 	transactions, err := r.transactionRepo.GetAllTransactions(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	recurringTransactions, err := r.recurringRepo.GetAllRecurringTransactions(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -50,15 +44,6 @@ func (r *CategoryService) GetAverageByCategory(ctx context.Context) ([]AverageCa
 			tx.CategoryID,
 			tx.Date.Year(),
 			tx.Date.Month())
-
-		monthlySumsByCategory[monthKey] += tx.Amount
-	}
-
-	for _, tx := range recurringTransactions {
-		monthKey := fmt.Sprintf("%d-%d-%d",
-			tx.CategoryID,
-			tx.StartDate.Year(),
-			tx.StartDate.Month())
 
 		monthlySumsByCategory[monthKey] += tx.Amount
 	}

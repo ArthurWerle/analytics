@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"analytics/internal/repository"
 	"analytics/internal/service"
 	"net/http"
 
@@ -9,24 +8,13 @@ import (
 )
 
 type TypeHandler struct {
-	repo    repository.TypeRepositoryInterface
 	service *service.TypeService
 }
 
-func NewTypeHandler(repo repository.TypeRepositoryInterface, service *service.TypeService) *TypeHandler {
+func NewTypeHandler(service *service.TypeService) *TypeHandler {
 	return &TypeHandler{
-		repo:    repo,
 		service: service,
 	}
-}
-
-func (h *TypeHandler) GetTypes(c *gin.Context) {
-	types, err := h.repo.GetAllTypes(c.Request.Context())
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, types)
 }
 
 func (h *TypeHandler) GetAverageByType(c *gin.Context) {
