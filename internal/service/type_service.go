@@ -8,8 +8,8 @@ import (
 )
 
 type AverageType struct {
-	Type    string
-	Average float64
+	TypeName string
+	Average  float64
 }
 
 type TypeService struct {
@@ -27,7 +27,9 @@ func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, erro
 		return nil, fmt.Errorf("failed to fetch transactions: %w", err)
 	}
 
-	monthlySumsByType := make(map[string]float64)
+	// Group monthly sums by type
+	// Key: "type-year-month", Value: sum for that month
+	monthlySumsByTypeMonth := make(map[string]float64)
 
 	for _, tx := range transactions {
 		if tx.Date == nil {
@@ -38,21 +40,20 @@ func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, erro
 			tx.Date.Year(),
 			tx.Date.Month())
 
-		monthlySumsByType[monthKey] += tx.Amount
+		monthlySumsByTypeMonth[monthKey] += tx.Amount
 	}
 
-	monthlySumsByTypeID := make(map[string][]float64)
+	// Group monthly sums by type only (to calculate average across months)
+	monthlySumsByType := make(map[string][]float64)
 
-	for key, sum := range monthlySumsByType {
-		var typeName string
-		var year, month int
-		fmt.Sscanf(key, "%s-%d-%d", &typeName, &year, &month)
-
-		monthlySumsByTypeID[typeName] = append(monthlySumsByTypeID[typeName], sum)
+	for key, sum := range monthlySumsByTypeMonth {
+		// Extract type name (everything before the first dash followed by a digit)
+		typeName := extractTypeName(key)
+		monthlySumsByType[typeName] = append(monthlySumsByType[typeName], sum)
 	}
 
 	var result []AverageType
-	for typeName, monthlySums := range monthlySumsByTypeID {
+	for typeName, monthlySums := range monthlySumsByType {
 		var total float64
 		for _, sum := range monthlySums {
 			total += sum
@@ -60,10 +61,21 @@ func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, erro
 		average := total / float64(len(monthlySums))
 
 		result = append(result, AverageType{
-			Type:    typeName,
-			Average: average,
+			TypeName: typeName,
+			Average:  average,
 		})
 	}
 
 	return result, nil
+}
+
+// extractTypeName extracts the type name from a key like "income-2025-10" or "expense-2025-12"
+func extractTypeName(key string) string {
+	// Find the position where the year starts (first digit after a dash)
+	for i := 0; i < len(key); i++ {
+		if key[i] == '-' && i+1 < len(key) && key[i+1] >= '0' && key[i+1] <= '9' {
+			return key[:i]
+		}
+	}
+	return key
 }
