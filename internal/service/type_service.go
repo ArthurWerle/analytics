@@ -21,15 +21,11 @@ func NewTypeService(transactionRepo repository.TransactionRepositoryInterface) *
 }
 
 func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, error) {
-	log.Printf("[TypeService.GetAverageByType] Fetching all transactions")
-
 	transactions, err := r.transactionRepo.GetAllTransactions(ctx)
 	if err != nil {
 		log.Printf("[TypeService.GetAverageByType] ERROR: Failed to fetch transactions: %v", err)
 		return nil, fmt.Errorf("failed to fetch transactions: %w", err)
 	}
-
-	log.Printf("[TypeService.GetAverageByType] Retrieved %d transactions", len(transactions))
 
 	monthlySumsByType := make(map[string]float64)
 
@@ -41,8 +37,6 @@ func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, erro
 
 		monthlySumsByType[monthKey] += tx.Amount
 	}
-
-	log.Printf("[TypeService.GetAverageByType] Grouped into %d monthly sums", len(monthlySumsByType))
 
 	monthlySumsByTypeID := make(map[string][]float64)
 
@@ -67,8 +61,6 @@ func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, erro
 			Average: average,
 		})
 	}
-
-	log.Printf("[TypeService.GetAverageByType] Calculated averages for %d types", len(result))
 
 	return result, nil
 }
