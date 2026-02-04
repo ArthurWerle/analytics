@@ -30,6 +30,9 @@ func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, erro
 	monthlySumsByType := make(map[string]float64)
 
 	for _, tx := range transactions {
+		if tx.Date == nil {
+			continue
+		}
 		monthKey := fmt.Sprintf("%s-%d-%d",
 			tx.Type,
 			tx.Date.Year(),
