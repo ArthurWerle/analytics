@@ -4,8 +4,6 @@ services:
       - financer-services_database
       - financer-transactions_transactions-network
       - financer-services_back-end
-    external_links:
-      - financer-services-postgres-1:postgres
     pull_policy: build
     restart: unless-stopped
     build:
