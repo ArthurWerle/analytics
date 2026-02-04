@@ -2,7 +2,7 @@ services:
   analytics:
     networks:
       - financer-services_database
-      - transactions-network
+      - financer-transactions_transactions-network
       - financer-services_back-end
     external_links:
       - financer-services-postgres-1:postgres
@@ -24,7 +24,7 @@ services:
 networks:
   financer-services_database:
     external: true
-  transactions-network:
+  financer-transactions_transactions-network:
     external: true
   financer-services_back-end:
     external: true
