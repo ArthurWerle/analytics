@@ -4,6 +4,7 @@ import (
 	"analytics/internal/repository"
 	"context"
 	"fmt"
+	"log"
 )
 
 type AverageType struct {
@@ -20,15 +21,20 @@ func NewTypeService(transactionRepo repository.TransactionRepositoryInterface) *
 }
 
 func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, error) {
+	log.Printf("[TypeService.GetAverageByType] Fetching all transactions")
+
 	transactions, err := r.transactionRepo.GetAllTransactions(ctx)
 	if err != nil {
-		return nil, err
+		log.Printf("[TypeService.GetAverageByType] ERROR: Failed to fetch transactions: %v", err)
+		return nil, fmt.Errorf("failed to fetch transactions: %w", err)
 	}
+
+	log.Printf("[TypeService.GetAverageByType] Retrieved %d transactions", len(transactions))
 
 	monthlySumsByType := make(map[string]float64)
 
 	for _, tx := range transactions {
-		monthKey := fmt.Sprintf("%d-%d-%d",
+		monthKey := fmt.Sprintf("%s-%d-%d",
 			tx.Type,
 			tx.Date.Year(),
 			tx.Date.Month())
@@ -36,12 +42,14 @@ func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, erro
 		monthlySumsByType[monthKey] += tx.Amount
 	}
 
+	log.Printf("[TypeService.GetAverageByType] Grouped into %d monthly sums", len(monthlySumsByType))
+
 	monthlySumsByTypeID := make(map[string][]float64)
 
 	for key, sum := range monthlySumsByType {
 		var typeName string
 		var year, month int
-		fmt.Sscanf(key, "%d-%d-%d", &typeName, &year, &month)
+		fmt.Sscanf(key, "%s-%d-%d", &typeName, &year, &month)
 
 		monthlySumsByTypeID[typeName] = append(monthlySumsByTypeID[typeName], sum)
 	}
@@ -59,6 +67,8 @@ func (r *TypeService) GetAverageByType(ctx context.Context) ([]AverageType, erro
 			Average: average,
 		})
 	}
+
+	log.Printf("[TypeService.GetAverageByType] Calculated averages for %d types", len(result))
 
 	return result, nil
 }
