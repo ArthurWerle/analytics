@@ -2,6 +2,8 @@ services:
   analytics:
     networks:
       - financer-services_database
+      - transactions-network
+      - financer-services_back-end
     external_links:
       - financer-services-postgres-1:postgres
     pull_policy: build
@@ -21,4 +23,8 @@ services:
 
 networks:
   financer-services_database:
+    external: true
+  transactions-network:
+    external: true
+  financer-services_back-end:
     external: true
