@@ -21,8 +21,8 @@ type Transaction struct {
 	Subtype     string       `db:"subtype"`
 	UpdatedAt   time.Time    `db:"updated_at"`
 	Frequency   string       `db:"frequency"`
-	StartDate   time.Time    `db:"start_date"`
-	EndDate     time.Time    `db:"end_date"`
+	StartDate   *time.Time   `db:"start_date"`
+	EndDate     *time.Time   `db:"end_date"`
 	Date        time.Time    `db:"date"`
 	CreatedAt   time.Time    `db:"created_at"`
 	Description string       `db:"description"`

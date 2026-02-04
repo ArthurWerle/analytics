@@ -18,8 +18,6 @@ func NewTransactionRepository(db *pgxpool.Pool) *TransactionRepository {
 }
 
 func (r *TransactionRepository) GetAllTransactions(ctx context.Context) ([]domain.Transaction, error) {
-	log.Printf("[TransactionRepository.GetAllTransactions] Executing query to fetch all transactions")
-
 	rows, err := r.db.Query(ctx, `
 		SELECT
 			id,
@@ -68,8 +66,6 @@ func (r *TransactionRepository) GetAllTransactions(ctx context.Context) ([]domai
 		log.Printf("[TransactionRepository.GetAllTransactions] ERROR: Row iteration error: %v", err)
 		return nil, fmt.Errorf("row iteration error: %w", err)
 	}
-
-	log.Printf("[TransactionRepository.GetAllTransactions] Successfully fetched %d transactions", len(transactions))
 
 	return transactions, nil
 }
